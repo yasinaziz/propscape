@@ -3,6 +3,7 @@ const cors = require('cors');
 const housesRouter = require('./houses');
 const authRouter = require('./auth');
 const marketingRouter = require('./marketing');
+const bannerRouter = require('./banner'); // Banner router
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use('/api/houses', housesRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/marketing', marketingRouter);
+app.use('/api', bannerRouter); // Banner routes
 
 // Health check
 app.get('/', (_req, res) => {

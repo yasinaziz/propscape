@@ -4,7 +4,7 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const { Pool } = require('pg');
-const authRoutes = require('../src/routes/auth');
+const authRoutes = require('./src/routes/auth');
 
 const app = express();
 app.use(cors());
@@ -106,6 +106,65 @@ app.get('/api/houses', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch properties' });
+  }
+});
+
+// --- Banner Endpoints ---
+
+// GET all banners for carousel
+app.get('/api/banner', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM homepage_banner ORDER BY id DESC');
+    res.json(result.rows); // <-- return array
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch banners' });
+  }
+});
+
+// POST save a new banner (only image_url and button_link)
+app.post('/api/banner', async (req, res) => {
+  // Accept either a single banner or an array of banners
+  const banners = Array.isArray(req.body) ? req.body : [req.body];
+  try {
+    // Optional: clear all banners if you want to replace them
+    // await pool.query('DELETE FROM homepage_banner');
+    for (const banner of banners) {
+      if (banner.image_url) {
+        await pool.query(
+          `INSERT INTO homepage_banner (image_url, button_link) VALUES ($1, $2)`,
+          [banner.image_url, banner.button_link]
+        );
+      }
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save banner' });
+  }
+});
+
+// DELETE a banner by id
+app.delete('/api/banner/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM homepage_banner WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete banner' });
+  }
+});
+
+// PUT update a banner by id
+app.put('/api/banner/:id', async (req, res) => {
+  const { image_url, button_link } = req.body;
+  try {
+    await pool.query(
+      'UPDATE homepage_banner SET image_url = $1, button_link = $2 WHERE id = $3',
+      [image_url, button_link, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update banner' });
   }
 });
 
